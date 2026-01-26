@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>botterccino | Bot Status</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+      min-height: 100vh;
+      color: #e2e8f0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .header-card {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      margin-bottom: 20px;
+    }
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    @media (min-width: 768px) {
+      .grid-layout { grid-template-columns: 350px 1fr; }
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .icon { font-size: 32px; line-height: 1; }
+    h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .platform { color: #94a3b8; font-size: 13px; }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 600;
+      background: #f59e0b22; color: #f59e0b;
+      margin-bottom: 16px;
+    }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #f59e0b;
+      animation: none;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .info-grid { display: grid; gap: 12px; }
+    .info-item { background: rgba(15, 23, 42, 0.5); border-radius: 10px; padding: 12px; }
+    .info-label {
+      font-size: 11px; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .info-value { font-size: 13px; color: #e2e8f0; word-break: break-all; }
+    .info-value a { color: #818cf8; text-decoration: none; }
+    .info-value a:hover { text-decoration: underline; }
+    .copy-btn {
+      background: #334155; border: none; color: #94a3b8;
+      padding: 4px 8px; border-radius: 6px; font-size: 10px;
+      cursor: pointer; margin-left: 8px;
+    }
+    .copy-btn:hover { background: #475569; color: #e2e8f0; }
+    
+    /* Terminal Styles */
+    .terminal-card {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 16px;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    .terminal-header {
+      background: rgba(30, 41, 59, 0.8);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    .terminal-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .terminal-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .terminal-dot.red { background: #ff5f56; }
+    .terminal-dot.yellow { background: #ffbd2e; }
+    .terminal-dot.green { background: #27c93f; }
+    .terminal-title {
+      font-size: 12px;
+      color: #94a3b8;
+      font-family: 'Monaco', 'Menlo', monospace;
+    }
+    .terminal-output {
+      background: #0a0e1a;
+      padding: 16px;
+      min-height: 400px;
+      max-height: 600px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .terminal-output::-webkit-scrollbar { width: 8px; }
+    .terminal-output::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    .terminal-output::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 4px; }
+    .log-line {
+      margin-bottom: 4px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .log-timestamp { color: #64748b; }
+    .log-info { color: #818cf8; }
+    .log-success { color: #10b981; }
+    .log-error { color: #ef4444; }
+    .log-warning { color: #f59e0b; }
+    .log-request { color: #06b6d4; }
+    
+    .test-panel {
+      background: rgba(30, 41, 59, 0.6);
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      padding: 16px;
+    }
+    .test-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .test-input {
+      flex: 1;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: #e2e8f0;
+      font-size: 13px;
+      font-family: 'Monaco', monospace;
+    }
+    .test-btn {
+      background: #818cf8;
+      border: none;
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .test-btn:hover { background: #6366f1; }
+    .test-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .footer {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      text-align: center;
+      font-size: 11px;
+      color: #64748b;
+    }
+    .footer a { color: #818cf8; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="grid-layout">
+      <!-- Info Sidebar -->
+      <div class="header-card">
+        <div class="header">
+          <span class="icon">🎮</span>
+          <div>
+            <h1>botterccino</h1>
+            <div class="platform">Discord Bot</div>
+          </div>
+        </div>
+        
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          ⏳ Pending Deploy
+        </div>
+        
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Webhook URL</div>
+            <div class="info-value">
+              <a href="https://bottin.workers.dev" target="_blank" id="workerUrl">https://bottin.workers.dev</a>
+              <button class="copy-btn" onclick="copyUrl()">Copy</button>
+            </div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">Last Updated</div>
+            <div class="info-value">1/26/2026, 1:05:14 PM</div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">Repository</div>
+            <div class="info-value">
+              <a href="https://github.com/GareBear99/bottin" target="_blank">GareBear99/bottin</a>
+            </div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-label">Total Requests</div>
+            <div class="info-value" id="requestCount">0</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Terminal -->
+      <div class="terminal-card">
+        <div class="terminal-header">
+          <div class="terminal-dots">
+            <div class="terminal-dot red"></div>
+            <div class="terminal-dot yellow"></div>
+            <div class="terminal-dot green"></div>
+          </div>
+          <div class="terminal-title">bottin — Live Output</div>
+          <button class="copy-btn" onclick="clearLogs()">Clear</button>
+        </div>
+        
+        <div class="terminal-output" id="terminalOutput">
+          <div class="log-line log-info">
+            <span class="log-timestamp">[1:05:14 PM]</span> Bot started
+          </div>
+          <div class="log-line log-success">
+            <span class="log-timestamp">[1:05:14 PM]</span> Listening on https://bottin.workers.dev
+          </div>
+          <div class="log-line" style="color: #64748b; margin-top: 12px;">
+            → Test your bot using the form below
+          </div>
+        </div>
+        
+        <div class="test-panel">
+          <h3 style="margin: 0 0 12px; font-size: 14px; color: #94a3b8;">Test Bot</h3>
+          <form class="test-form" onsubmit="testBot(event)">
+            <input type="text" class="test-input" id="testInput" placeholder="{"message": "Hello bot!"}" value="{"message": "Hello bot!"}">
+            <button type="submit" class="test-btn" id="testBtn">Send</button>
+          </form>
+          <div style="font-size: 11px; color: #64748b;">
+            💡 Sends POST request with JSON payload to your bot
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      Powered by <a href="https://botfortress.io" target="_blank">BotFortress</a> • <a href="https://github.com/GareBear99/bottin" target="_blank">View Source</a>
+    </div>
+  </div>
+  
+  <script>
+    const workerUrl = 'https://bottin.workers.dev';
+    let requestCount = 0;
+    
+    function addLog(message, type = 'info') {
+      const output = document.getElementById('terminalOutput');
+      const timestamp = new Date().toLocaleTimeString();
+      const line = document.createElement('div');
+      line.className = 'log-line log-' + type;
+      line.innerHTML = '<span class="log-timestamp">[' + timestamp + ']</span> ' + message;
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+    }
+    
+    function clearLogs() {
+      document.getElementById('terminalOutput').innerHTML = '<div class="log-line log-info"><span class="log-timestamp">[' + new Date().toLocaleTimeString() + ']</span> Logs cleared</div>';
+    }
+    
+    function copyUrl() {
+      navigator.clipboard.writeText(workerUrl).then(() => {
+        event.target.textContent = 'Copied!';
+        setTimeout(() => event.target.textContent = 'Copy', 1500);
+      });
+    }
+    
+    async function testBot(e) {
+      e.preventDefault();
+      const input = document.getElementById('testInput').value;
+      const btn = document.getElementById('testBtn');
+      
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      
+      addLog('→ POST ' + workerUrl, 'request');
+      addLog('→ Payload: ' + input, 'info');
+      
+      try {
+        let body;
+        try {
+          body = JSON.parse(input);
+        } catch {
+          body = { message: input };
+        }
+        
+        const startTime = performance.now();
+        const response = await fetch(workerUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const endTime = performance.now();
+        const duration = Math.round(endTime - startTime);
+        
+        requestCount++;
+        document.getElementById('requestCount').textContent = requestCount;
+        
+        const responseText = await response.text();
+        
+        if (response.ok) {
+          addLog('← ' + response.status + ' ' + response.statusText + ' (' + duration + 'ms)', 'success');
+          try {
+            const json = JSON.parse(responseText);
+            addLog('← Response: ' + JSON.stringify(json, null, 2), 'success');
+          } catch {
+            addLog('← Response: ' + responseText, 'success');
+          }
+        } else {
+          addLog('← ' + response.status + ' ' + response.statusText, 'error');
+          addLog('← Error: ' + responseText, 'error');
+        }
+      } catch (err) {
+        addLog('✕ Request failed: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send';
+      }
+    }
+    
+    // Auto-refresh status every 30s
+    setInterval(() => {
+      addLog('Ping health check...', 'info');
+      fetch(workerUrl)
+        .then(r => addLog('✓ Bot is responsive (' + r.status + ')', 'success'))
+        .catch(() => addLog('✕ Bot not responding', 'warning'));
+    }, 30000);
+  </script>
+</body>
+</html>
