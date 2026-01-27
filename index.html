@@ -206,7 +206,7 @@
           
           <div class="info-item">
             <div class="info-label">Last Updated</div>
-            <div class="info-value">1/26/2026, 5:22:07 PM</div>
+            <div class="info-value">1/27/2026, 2:29:31 PM</div>
           </div>
           
           <div class="info-item">
@@ -237,10 +237,10 @@
         
         <div class="terminal-output" id="terminalOutput">
           <div class="log-line log-info">
-            <span class="log-timestamp">[5:22:07 PM]</span> Bot started
+            <span class="log-timestamp">[2:29:31 PM]</span> Bot started
           </div>
           <div class="log-line log-success">
-            <span class="log-timestamp">[5:22:07 PM]</span> Listening on https://bottin.workers.dev
+            <span class="log-timestamp">[2:29:31 PM]</span> Listening on https://bottin.workers.dev
           </div>
           <div class="log-line" style="color: #64748b; margin-top: 12px;">
             → Test your bot using the form below
@@ -344,13 +344,49 @@
       }
     }
     
-    // Auto-refresh status every 30s
-    setInterval(() => {
-      addLog('Ping health check...', 'info');
-      fetch(workerUrl)
-        .then(r => addLog('✓ Bot is responsive (' + r.status + ')', 'success'))
-        .catch(() => addLog('✕ Bot not responding', 'warning'));
-    }, 30000);
+    // Load logs from GitHub repo (no worker pinging!)
+    async function loadLatestLogs() {
+      try {
+        const logsUrl = 'https://raw.githubusercontent.com/GareBear99/bottin/main/logs/latest.json';
+        const response = await fetch(logsUrl);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Update request count from metrics
+          if (data.metrics) {
+            document.getElementById('requestCount').textContent = data.metrics.totalRequests || 0;
+          }
+          
+          // Add recent logs to terminal (last 10 only)
+          if (data.logs && data.logs.length > 0) {
+            data.logs.slice(-10).forEach(log => {
+              const timestamp = new Date(log.timestamp).toLocaleTimeString();
+              if (log.type === 'request') {
+                addLog('→ ' + log.method + ' ' + log.path, 'request');
+              } else if (log.type === 'response') {
+                addLog('← ' + log.status + ' (' + log.duration + 'ms)', 'success');
+              } else if (log.type === 'error') {
+                addLog('✗ ' + log.error, 'error');
+              }
+            });
+          }
+          
+          const updateTime = new Date(data.timestamp).toLocaleTimeString();
+          addLog('✓ Logs updated from GitHub (' + updateTime + ')', 'info');
+        } else {
+          addLog('⚠ No logs available yet - send a request to generate logs', 'warning');
+        }
+      } catch (err) {
+        addLog('⚠ Could not load logs: ' + err.message, 'warning');
+      }
+    }
+    
+    // Load logs on page load
+    loadLatestLogs();
+    
+    // Refresh every 30s from GitHub (no worker pinging)
+    setInterval(loadLatestLogs, 30000);
   </script>
 </body>
 </html>
